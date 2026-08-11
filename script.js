@@ -5,6 +5,8 @@ const input = document.querySelector("#task-input");
 const taskList = document.querySelector("[data-task-list]");
 const emptyState = document.querySelector("[data-empty-state]");
 const taskCount = document.querySelector("[data-task-count]");
+const activeCount = document.querySelector("[data-active-count]");
+const completedCount = document.querySelector("[data-completed-count]");
 const taskFilter = document.querySelector("[data-task-filter]");
 const taskSearch = document.querySelector("[data-task-search]");
 const taskTemplate = document.querySelector("#task-item-template");
@@ -152,8 +154,13 @@ function renderTasks() {
   });
 
   const tasksTotal = tasks.length;
+  const completedTotal = tasks.filter((task) => task.completed).length;
+  const activeTotal = tasksTotal - completedTotal;
   const visibleTasksTotal = visibleTasks.length;
+
   taskCount.textContent = `${visibleTasksTotal} із ${tasksTotal} ${getTaskLabel(tasksTotal)}`;
+  activeCount.textContent = `Активні: ${activeTotal}`;
+  completedCount.textContent = `Виконані: ${completedTotal}`;
   emptyState.classList.toggle("is-hidden", visibleTasksTotal > 0);
 }
 

@@ -148,6 +148,15 @@ button:hover {
   color: var(--muted);
 }
 
+.tasks-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 2px 0 14px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .task-list {
   list-style: none;
   margin: 0;
@@ -276,6 +285,11 @@ button:hover {
 
   .tasks-controls {
     grid-template-columns: 1fr;
+  }
+
+  .tasks-stats {
+    flex-direction: column;
+    gap: 8px;
   }
 
   .task-item__actions {
