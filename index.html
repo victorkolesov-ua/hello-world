@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel">
+        <div class="panel__header">
+          <p class="eyebrow">Vanilla JavaScript</p>
+          <h1>Task Manager</h1>
+          <p class="subtitle">Керуйте своїми завданнями без зайвих залежностей.</p>
+        </div>
+
+        <form class="task-form" data-task-form>
+          <label class="task-form__label" for="task-input">Нове завдання</label>
+          <div class="task-form__row">
+            <input
+              id="task-input"
+              name="task"
+              type="text"
+              maxlength="120"
+              placeholder="Наприклад: Підготувати звіт"
+              autocomplete="off"
+              required
+            />
+            <button type="submit">Додати</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="tasks-header">
+          <h2>Список завдань</h2>
+          <span class="counter" data-task-count>0 завдань</span>
+        </div>
+
+        <ul class="task-list" data-task-list aria-live="polite"></ul>
+        <p class="empty-state" data-empty-state>Поки немає жодного завдання. Додайте перше.</p>
+      </section>
+    </main>
+
+    <template id="task-item-template">
+      <li class="task-item">
+        <div class="task-item__content">
+          <p class="task-item__text" data-task-text></p>
+          <form class="task-item__edit is-hidden" data-edit-form>
+            <input type="text" name="editTask" maxlength="120" required />
+            <div class="task-item__actions task-item__actions--edit">
+              <button type="submit" class="button button--primary">Зберегти</button>
+              <button type="button" class="button button--ghost" data-cancel-edit>Скасувати</button>
+            </div>
+          </form>
+        </div>
+        <div class="task-item__actions">
+          <button type="button" class="button button--primary" data-edit-task>Редагувати</button>
+          <button type="button" class="button button--danger" data-delete-task>Видалити</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
