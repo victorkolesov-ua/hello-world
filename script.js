@@ -5,11 +5,21 @@ const input = document.querySelector("#task-input");
 const taskList = document.querySelector("[data-task-list]");
 const emptyState = document.querySelector("[data-empty-state]");
 const taskCount = document.querySelector("[data-task-count]");
+const taskFilter = document.querySelector("[data-task-filter]");
+const taskSearch = document.querySelector("[data-task-search]");
 const taskTemplate = document.querySelector("#task-item-template");
 
 let tasks = loadTasks();
 
 renderTasks();
+
+taskFilter.addEventListener("change", () => {
+  renderTasks();
+});
+
+taskSearch.addEventListener("input", () => {
+  renderTasks();
+});
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -24,6 +34,7 @@ form.addEventListener("submit", (event) => {
   tasks.unshift({
     id: createTaskId(),
     text: value,
+    completed: false,
   });
 
   persistTasks();
@@ -36,7 +47,13 @@ function loadTasks() {
   try {
     const savedTasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     return Array.isArray(savedTasks)
-      ? savedTasks.filter((task) => task && typeof task.id === "string" && typeof task.text === "string")
+      ? savedTasks
+          .filter((task) => task && typeof task.id === "string" && typeof task.text === "string")
+          .map((task) => ({
+            id: task.id,
+            text: task.text,
+            completed: Boolean(task.completed),
+          }))
       : [];
   } catch {
     return [];
@@ -56,11 +73,14 @@ function createTaskId() {
 }
 
 function renderTasks() {
+  const visibleTasks = getVisibleTasks();
+
   taskList.innerHTML = "";
 
-  tasks.forEach((task) => {
+  visibleTasks.forEach((task) => {
     const taskItem = taskTemplate.content.firstElementChild.cloneNode(true);
     const textElement = taskItem.querySelector("[data-task-text]");
+    const toggleComplete = taskItem.querySelector("[data-toggle-complete]");
     const editButton = taskItem.querySelector("[data-edit-task]");
     const deleteButton = taskItem.querySelector("[data-delete-task]");
     const editForm = taskItem.querySelector("[data-edit-form]");
@@ -69,6 +89,22 @@ function renderTasks() {
 
     textElement.textContent = task.text;
     editInput.value = task.text;
+    toggleComplete.checked = task.completed;
+    taskItem.classList.toggle("is-completed", task.completed);
+
+    toggleComplete.addEventListener("change", () => {
+      tasks = tasks.map((currentTask) =>
+        currentTask.id === task.id
+          ? {
+              ...currentTask,
+              completed: toggleComplete.checked,
+            }
+          : currentTask
+      );
+
+      persistTasks();
+      renderTasks();
+    });
 
     editButton.addEventListener("click", () => {
       textElement.classList.add("is-hidden");
@@ -116,8 +152,25 @@ function renderTasks() {
   });
 
   const tasksTotal = tasks.length;
-  taskCount.textContent = `${tasksTotal} ${getTaskLabel(tasksTotal)}`;
-  emptyState.classList.toggle("is-hidden", tasksTotal > 0);
+  const visibleTasksTotal = visibleTasks.length;
+  taskCount.textContent = `${visibleTasksTotal} із ${tasksTotal} ${getTaskLabel(tasksTotal)}`;
+  emptyState.classList.toggle("is-hidden", visibleTasksTotal > 0);
+}
+
+function getVisibleTasks() {
+  const selectedFilter = taskFilter.value;
+  const query = taskSearch.value.trim().toLowerCase();
+
+  return tasks.filter((task) => {
+    const matchesFilter =
+      selectedFilter === "all" ||
+      (selectedFilter === "active" && !task.completed) ||
+      (selectedFilter === "completed" && task.completed);
+
+    const matchesSearch = !query || task.text.toLowerCase().includes(query);
+
+    return matchesFilter && matchesSearch;
+  });
 }
 
 function getTaskLabel(count) {

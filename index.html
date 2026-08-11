@@ -38,6 +38,24 @@
           <span class="counter" data-task-count>0 завдань</span>
         </div>
 
+        <div class="tasks-controls">
+          <label class="tasks-controls__field" for="task-filter">Фільтр</label>
+          <select id="task-filter" data-task-filter>
+            <option value="all">Усі</option>
+            <option value="active">Активні</option>
+            <option value="completed">Виконані</option>
+          </select>
+
+          <label class="tasks-controls__field" for="task-search">Пошук</label>
+          <input
+            id="task-search"
+            data-task-search
+            type="text"
+            placeholder="Пошук за назвою"
+            autocomplete="off"
+          />
+        </div>
+
         <ul class="task-list" data-task-list aria-live="polite"></ul>
         <p class="empty-state" data-empty-state>Поки немає жодного завдання. Додайте перше.</p>
       </section>
@@ -46,6 +64,10 @@
     <template id="task-item-template">
       <li class="task-item">
         <div class="task-item__content">
+          <label class="task-item__toggle">
+            <input type="checkbox" data-toggle-complete />
+            <span>Виконано</span>
+          </label>
           <p class="task-item__text" data-task-text></p>
           <form class="task-item__edit is-hidden" data-edit-form>
             <input type="text" name="editTask" maxlength="120" required />
