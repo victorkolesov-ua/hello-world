@@ -10,4 +10,3 @@
 ## Запуск
 
 Відкрийте файл `/home/runner/work/hello-world/hello-world/index.html` у браузері.
-Відкрийте файл `/home/runner/work/hello-world/hello-world/index.html` у браузері.
