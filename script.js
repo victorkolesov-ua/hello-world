@@ -1,62 +1,76 @@
 const STORAGE_KEY = "task-manager-items";
 
-const form = document.querySelector("[data-task-form]");
-const input = document.querySelector("#task-input");
-const taskList = document.querySelector("[data-task-list]");
-const emptyState = document.querySelector("[data-empty-state]");
-const taskCount = document.querySelector("[data-task-count]");
-const activeCount = document.querySelector("[data-active-count]");
-const completedCount = document.querySelector("[data-completed-count]");
-const taskFilter = document.querySelector("[data-task-filter]");
-const taskSearch = document.querySelector("[data-task-search]");
-const taskTemplate = document.querySelector("#task-item-template");
+const form = document.querySelector("#task-form");
+const descriptionInput = document.querySelector("#task-description");
+const dateInput = document.querySelector("#task-date");
+const timeInput = document.querySelector("#task-time");
+const taskTableBody = document.querySelector("#task-table-body");
+const emptyState = document.querySelector("#empty-state");
+const taskCounter = document.querySelector("#task-counter");
+const activeCount = document.querySelector("#active-count");
+const completedCount = document.querySelector("#completed-count");
+const taskFilter = document.querySelector("#task-filter");
+const taskSearch = document.querySelector("#task-search");
+const clearCompletedButton = document.querySelector("#clear-completed");
+const taskTemplate = document.querySelector("#task-row-template");
 
 let tasks = loadTasks();
 
 renderTasks();
 
-taskFilter.addEventListener("change", () => {
-  renderTasks();
-});
-
-taskSearch.addEventListener("input", () => {
-  renderTasks();
-});
-
 form.addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const value = input.value.trim();
+  const description = descriptionInput.value.trim();
+  const date = dateInput.value;
+  const time = timeInput.value;
 
-  if (!value) {
-    input.focus();
+  if (!description || !date || !time) {
+    const firstEmpty = !description ? descriptionInput : !date ? dateInput : timeInput;
+    firstEmpty.focus();
     return;
   }
 
   tasks.unshift({
     id: createTaskId(),
-    text: value,
+    description,
+    date,
+    time,
     completed: false,
   });
 
   persistTasks();
-  renderTasks();
   form.reset();
-  input.focus();
+  descriptionInput.focus();
+  renderTasks();
+});
+
+taskFilter.addEventListener("change", renderTasks);
+taskSearch.addEventListener("input", renderTasks);
+clearCompletedButton.addEventListener("click", () => {
+  tasks = tasks.filter((task) => !task.completed);
+  persistTasks();
+  renderTasks();
 });
 
 function loadTasks() {
   try {
     const savedTasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    return Array.isArray(savedTasks)
-      ? savedTasks
-          .filter((task) => task && typeof task.id === "string" && typeof task.text === "string")
-          .map((task) => ({
-            id: task.id,
-            text: task.text,
-            completed: Boolean(task.completed),
-          }))
-      : [];
+
+    if (!Array.isArray(savedTasks)) {
+      return [];
+    }
+
+    return savedTasks
+      .filter((task) => task && typeof task.id === "string")
+      .map((task) => ({
+        id: task.id,
+        description: typeof task.description === "string" ? task.description : "",
+        date: typeof task.date === "string" ? task.date : "",
+        time: typeof task.time === "string" ? task.time : "",
+        completed: Boolean(task.completed),
+      }))
+      .filter((task) => task.description);
   } catch {
     return [];
   }
@@ -76,31 +90,30 @@ function createTaskId() {
 
 function renderTasks() {
   const visibleTasks = getVisibleTasks();
-
-  taskList.innerHTML = "";
+  taskTableBody.innerHTML = "";
 
   visibleTasks.forEach((task) => {
-    const taskItem = taskTemplate.content.firstElementChild.cloneNode(true);
-    const textElement = taskItem.querySelector("[data-task-text]");
-    const toggleComplete = taskItem.querySelector("[data-toggle-complete]");
-    const editButton = taskItem.querySelector("[data-edit-task]");
-    const deleteButton = taskItem.querySelector("[data-delete-task]");
-    const editForm = taskItem.querySelector("[data-edit-form]");
-    const editInput = editForm.querySelector('input[name="editTask"]');
-    const cancelEditButton = taskItem.querySelector("[data-cancel-edit]");
+    const row = taskTemplate.content.firstElementChild.cloneNode(true);
+    const textCell = row.querySelector(".task-text");
+    const dateCell = row.querySelector(".task-date");
+    const timeCell = row.querySelector(".task-time");
+    const checkbox = row.querySelector(".task-complete");
+    const editButton = row.querySelector(".task-edit");
+    const deleteButton = row.querySelector(".task-delete");
 
-    textElement.textContent = task.text;
-    editInput.value = task.text;
-    toggleComplete.checked = task.completed;
-    taskItem.classList.toggle("is-completed", task.completed);
+    textCell.textContent = task.description;
+    dateCell.textContent = formatDate(task.date);
+    timeCell.textContent = task.time || "--:--";
+    checkbox.checked = task.completed;
+    row.classList.toggle("is-completed", task.completed);
 
-    toggleComplete.addEventListener("change", () => {
+    checkbox.addEventListener("change", () => {
       tasks = tasks.map((currentTask) =>
         currentTask.id === task.id
           ? {
-              ...currentTask,
-              completed: toggleComplete.checked,
-            }
+            ...currentTask,
+            completed: checkbox.checked,
+          }
           : currentTask
       );
 
@@ -109,34 +122,25 @@ function renderTasks() {
     });
 
     editButton.addEventListener("click", () => {
-      textElement.classList.add("is-hidden");
-      editForm.classList.remove("is-hidden");
-      editInput.focus();
-      editInput.setSelectionRange(editInput.value.length, editInput.value.length);
-    });
+      const nextDescription = window.prompt("Редагувати опис задачі:", task.description);
 
-    cancelEditButton.addEventListener("click", () => {
-      editInput.value = task.text;
-      editForm.classList.add("is-hidden");
-      textElement.classList.remove("is-hidden");
-    });
+      if (nextDescription === null) {
+        return;
+      }
 
-    editForm.addEventListener("submit", (event) => {
-      event.preventDefault();
+      const updatedDescription = nextDescription.trim();
 
-      const nextValue = editInput.value.trim();
-
-      if (!nextValue) {
-        editInput.focus();
+      if (!updatedDescription) {
+        window.alert("Опис задачі не може бути порожнім.");
         return;
       }
 
       tasks = tasks.map((currentTask) =>
         currentTask.id === task.id
           ? {
-              ...currentTask,
-              text: nextValue,
-            }
+            ...currentTask,
+            description: updatedDescription,
+          }
           : currentTask
       );
 
@@ -150,18 +154,17 @@ function renderTasks() {
       renderTasks();
     });
 
-    taskList.appendChild(taskItem);
+    taskTableBody.appendChild(row);
   });
 
   const tasksTotal = tasks.length;
   const completedTotal = tasks.filter((task) => task.completed).length;
   const activeTotal = tasksTotal - completedTotal;
-  const visibleTasksTotal = visibleTasks.length;
 
-  taskCount.textContent = `${visibleTasksTotal} із ${tasksTotal} ${getTaskLabel(tasksTotal)}`;
-  activeCount.textContent = `Активні: ${activeTotal}`;
-  completedCount.textContent = `Виконані: ${completedTotal}`;
-  emptyState.classList.toggle("is-hidden", visibleTasksTotal > 0);
+  taskCounter.textContent = `${visibleTasks.length} із ${tasksTotal} ${getTaskLabel(tasksTotal)}`;
+  activeCount.textContent = String(activeTotal);
+  completedCount.textContent = String(completedTotal);
+  emptyState.hidden = visibleTasks.length > 0;
 }
 
 function getVisibleTasks() {
@@ -174,7 +177,7 @@ function getVisibleTasks() {
       (selectedFilter === "active" && !task.completed) ||
       (selectedFilter === "completed" && task.completed);
 
-    const matchesSearch = !query || task.text.toLowerCase().includes(query);
+    const matchesSearch = !query || task.description.toLowerCase().includes(query);
 
     return matchesFilter && matchesSearch;
   });
@@ -190,4 +193,22 @@ function getTaskLabel(count) {
   }
 
   return "завдань";
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
 }
